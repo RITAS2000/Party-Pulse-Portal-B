@@ -4,11 +4,14 @@ import routes from './routes/index.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 const PORT = process.env.PORT;
 export function setupServer() {
   const app = express();
   app.set('trust proxy', 1);
+  app.use(express.json());
+  app.use(cookieParser());
 
   // const frontendUrl = process.env.FRONTEND_URL;
 
@@ -39,7 +42,6 @@ export function setupServer() {
     message: 'Too many requests, please try again later.',
   });
   app.use(limiter);
-  app.use(express.json());
   app.use('/party', routes);
   app.use(notFoundHandler);
   app.use(errorHandler);

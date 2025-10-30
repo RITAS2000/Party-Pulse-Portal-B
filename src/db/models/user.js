@@ -18,8 +18,6 @@ const userSchema = new Schema(
       default: 'user',
     },
     clanId: { type: String, default: false },
-
-    isAdmin: { type: Boolean, default: false },
   },
   {
     timestamps: true,
