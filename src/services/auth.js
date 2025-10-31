@@ -57,6 +57,7 @@ export async function loginUser(payload) {
   return {
     session,
     user: {
+      userId: user._id,
       username: user.username,
       role: user.role,
       clanId: user.clanId,
