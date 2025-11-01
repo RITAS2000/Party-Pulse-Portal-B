@@ -4,7 +4,6 @@ import { UsersCollection } from '../db/models/user.js';
 
 export async function auth(req, res, next) {
   const { authorization } = req.headers;
-
   if (typeof authorization !== 'string') {
     throw createHttpError.Unauthorized('Please provide access token');
   }
