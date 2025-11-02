@@ -1,18 +1,36 @@
-// const gallerySchema = new mongoose.Schema({
-//   originalCharacterId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'Character',
-//     required: true,
-//   },
-//   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-//   nickname: String,
-//   level: Number,
-//   race: String,
-//   avatar: String,
-//   isApproved: { type: Boolean, default: false },
-//   createdAt: { type: Date, default: Date.now },
-// });
+import { model, Schema } from 'mongoose';
 
+const galleryCharacterSchema = new Schema(
+  {
+    originalCharId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Character',
+      required: true,
+    },
+
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+
+    nickname: { type: String, required: true },
+    race: {
+      type: String,
+      required: true,
+    },
+    level: { type: Number, required: true },
+    avatar: { type: String },
+    server: { type: String },
+    isApproved: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
+
+export const GalleryCharacters = model(
+  'GalleryCharacter',
+  galleryCharacterSchema,
+);
 // Видалити копію з галереї будь-коли
 // app.delete("/gallery/remove/:id", auth, async (req, res) => {
 //   const entry = await GalleryCollection.findById(req.params.id);

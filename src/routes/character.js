@@ -29,5 +29,5 @@ router.post(
 
 router.patch('/reorder', reorderCharsController);
 router.patch('/:id', updateCharacterLevel);
-router.delete('/:id', auth, isValidId, deleteCharacterController);
+router.delete('/:charid', auth, isValidId, deleteCharacterController);
 export default router;

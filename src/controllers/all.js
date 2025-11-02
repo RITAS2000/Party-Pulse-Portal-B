@@ -1,14 +1,16 @@
 import { UsersCollection } from '../db/models/user.js';
 import { CharactersCollection } from '../db/models/character.js';
+import { ClansCollection } from '../db/models/clan.js';
 
 export const getStats = async (req, res) => {
   try {
-    const [usersCount, charsCount] = await Promise.all([
+    const [usersCount, charsCount, clansCount] = await Promise.all([
       UsersCollection.countDocuments(),
       CharactersCollection.countDocuments(),
+      ClansCollection.countDocuments(),
     ]);
 
-    res.status(200).json({ usersCount, charsCount });
+    res.status(200).json({ usersCount, charsCount, clansCount });
   } catch (err) {
     console.error('❌ Stats error:', err);
     res.status(500).json({ message: 'Failed to load stats' });

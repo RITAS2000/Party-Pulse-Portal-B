@@ -14,10 +14,15 @@ const userSchema = new Schema(
 
     role: {
       type: String,
-      enum: ['user', 'admin', 'clanLeader'],
+      enum: ['user', 'admin'],
       default: 'user',
     },
-    clanId: { type: String, default: false },
+    clanId: { type: String, default: null },
+    clanRole: {
+      type: String,
+      enum: ['member', 'leader'],
+      default: null,
+    },
   },
   {
     timestamps: true,
