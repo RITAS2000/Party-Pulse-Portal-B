@@ -1,5 +1,7 @@
 import {
   createCharacter,
+  getAllChars,
+  getCharById,
   getUserCharacters,
   reorderChars,
 } from '../services/character.js';
@@ -47,11 +49,28 @@ import createHttpError from 'http-errors';
 import { deleteCharacter } from '../services/character.js';
 
 export async function deleteCharacterController(req, res) {
-  const result = await deleteCharacter(req.params.id, req.user.id);
+  const result = await deleteCharacter(req.params.charId, req.user.id);
 
   if (!result) {
     throw new createHttpError.NotFound('Character not found');
   }
 
   res.status(204).end();
+}
+
+export async function gerCharByIdController(req, res) {
+  const { charId } = req.params;
+
+  const char = await getCharById(charId);
+  if (!char) {
+    return res.status(404).json({ message: 'Character not found' });
+  }
+
+  res.status(200).json({ char });
+}
+
+export async function getAllCarsController(req, res) {
+  const result = await getAllChars();
+
+  res.status(200).json({ result });
 }

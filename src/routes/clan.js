@@ -4,6 +4,7 @@ import {} from '../controllers/clan.js';
 import { upload } from '../middlewares/upload.js';
 import { addClansController } from '../controllers/clan.js';
 import { getClansController } from '../controllers/clan.js';
+import { deleteClanController } from '../controllers/clan.js';
 
 const router = express.Router();
 router.get('/', auth, getClansController);
@@ -16,5 +17,6 @@ router.post(
   }),
   addClansController,
 );
+router.delete('/:clanId', auth, deleteClanController);
 
 export default router;

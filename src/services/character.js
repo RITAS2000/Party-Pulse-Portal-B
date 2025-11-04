@@ -23,3 +23,12 @@ export const reorderChars = async (order) => {
 export function deleteCharacter(charId, userId) {
   return CharactersCollection.findOneAndDelete({ _id: charId, userId });
 }
+
+export async function getCharById(id) {
+  return await CharactersCollection.findById(id);
+}
+
+export async function getAllChars() {
+  const chars = CharactersCollection.find().lean();
+  return chars;
+}

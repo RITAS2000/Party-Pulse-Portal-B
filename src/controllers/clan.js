@@ -1,5 +1,5 @@
 import { UsersCollection } from '../db/models/user.js';
-import { createClan, getAllClans } from '../services/clan.js';
+import { createClan, deleteClan, getAllClans } from '../services/clan.js';
 import { uploadToCloudinary } from '../utils/uploadCloudinary.js';
 import * as fs from 'node:fs/promises';
 
@@ -8,7 +8,7 @@ export async function addClansController(req, res) {
     const result = req.file ? await uploadToCloudinary(req.file.path) : null;
     if (req.file) await fs.unlink(req.file.path);
 
-    const { clanName, server, clanColor } = req.body;
+    const { clanName, server, clanColor, charId, leaderCharNick } = req.body;
     const userId = req.user.id;
 
     if (!clanName || !server) {
@@ -19,10 +19,13 @@ export async function addClansController(req, res) {
       clanName,
       server,
       clanColor,
+      charId,
+      leaderCharNick,
       logo: result.secure_url,
       leaderId: userId,
       createdBy: userId,
       members: [userId],
+      clanChars: [charId],
     });
 
     await UsersCollection.findByIdAndUpdate(userId, {
@@ -44,4 +47,18 @@ export async function addClansController(req, res) {
 export async function getClansController(req, res) {
   const clans = await getAllClans();
   res.status(200).json(clans);
+}
+
+export async function deleteClanController(req, res) {
+  const { clanId } = req.params;
+  const userId = req.user.id;
+
+  const clan = await deleteClan(clanId, userId);
+
+  if (!clan) {
+    return res
+      .status(403)
+      .json({ message: 'Only leader can delete this clan' });
+  }
+  res.status(204).end();
 }
