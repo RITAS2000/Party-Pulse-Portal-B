@@ -35,7 +35,22 @@ const characterSchema = new Schema(
     server: {
       type: String,
       required: true,
-      default: 'Global',
+    },
+    clan: {
+      clanId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Clan',
+        required: false,
+      },
+      role: {
+        type: String,
+        enum: ['leader', 'member'],
+        default: 'member',
+      },
+      accepted: {
+        type: Boolean,
+        default: false,
+      },
     },
   },
   {

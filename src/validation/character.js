@@ -6,4 +6,9 @@ export const characterSchema = Joi.object({
   race: Joi.string().required(),
   level: Joi.number().integer().min(1).max(105).required(),
   avatar: Joi.string().uri().allow(null, ''),
+  clan: Joi.object({
+    clanId: Joi.string().optional(),
+    role: Joi.string().valid('leader', 'member').default('member'),
+    accepted: Joi.boolean().default(false),
+  }).optional(),
 });

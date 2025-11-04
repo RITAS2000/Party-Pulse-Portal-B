@@ -17,12 +17,7 @@ const userSchema = new Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
-    clanId: { type: String, default: null },
-    clanRole: {
-      type: String,
-      enum: ['member', 'leader'],
-      default: null,
-    },
+    clansId: [{ type: Schema.Types.ObjectId, ref: 'Clan', default: [] }],
   },
   {
     timestamps: true,

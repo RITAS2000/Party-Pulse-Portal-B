@@ -5,6 +5,8 @@ import { upload } from '../middlewares/upload.js';
 import { addClansController } from '../controllers/clan.js';
 import { getClansController } from '../controllers/clan.js';
 import { deleteClanController } from '../controllers/clan.js';
+import { validateUser } from '../middlewares/validateUser.js';
+import { clanValidationSchema } from '../validation/clan.js';
 
 const router = express.Router();
 router.get('/', auth, getClansController);
@@ -15,6 +17,7 @@ router.post(
     req.body.userId = req.user.id;
     next();
   }),
+  validateUser(clanValidationSchema),
   addClansController,
 );
 router.delete('/:clanId', auth, deleteClanController);

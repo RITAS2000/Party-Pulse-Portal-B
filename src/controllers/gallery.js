@@ -38,10 +38,7 @@ export async function getGalleryController(req, res) {
 }
 
 export async function toggleApprovController(req, res) {
-  console.log('🚀 ~ toggleApprovController ~ params:', req.params);
   const { galleryId } = req.params;
-
-  console.log('🚀 ~ toggleApprovController ~ galleryId:', galleryId);
 
   if (!galleryId)
     return res.status(400).json({ message: 'Missing gallery item id' });
