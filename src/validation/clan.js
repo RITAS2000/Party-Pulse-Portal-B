@@ -24,4 +24,5 @@ export const clanValidationSchema = Joi.object({
       'indigo',
     )
     .default('red'),
+  message: Joi.string().max(2000).allow(''),
 });

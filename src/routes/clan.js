@@ -1,15 +1,26 @@
 import express from 'express';
 import { auth } from '../middlewares/auth.js';
-import {} from '../controllers/clan.js';
 import { upload } from '../middlewares/upload.js';
-import { addClansController } from '../controllers/clan.js';
+import {
+  addCharToClanController,
+  addClansController,
+} from '../controllers/clan.js';
 import { getClansController } from '../controllers/clan.js';
 import { deleteClanController } from '../controllers/clan.js';
 import { validateUser } from '../middlewares/validateUser.js';
 import { clanValidationSchema } from '../validation/clan.js';
+import { getClanByIdController } from '../controllers/clan.js';
+import {
+  getClanMessageController,
+  upsertMessageController,
+} from '../controllers/clan.js';
 
 const router = express.Router();
 router.get('/', auth, getClansController);
+router.patch('/add-message', auth, upsertMessageController);
+router.patch('/add-char', auth, addCharToClanController);
+router.get('/:clanId', getClanByIdController);
+router.get('/:clanId/message', getClanMessageController);
 router.post(
   '/add',
   auth,

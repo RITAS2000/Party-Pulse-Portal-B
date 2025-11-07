@@ -5,6 +5,7 @@ import {
   deleteCharacterController,
   gerCharByIdController,
   getAllCarsController,
+  getFreeCharsController,
   getUserCharactersController,
   reorderCharsController,
 } from '../controllers/character.js';
@@ -16,6 +17,7 @@ import { updateCharacterLevel } from '../controllers/all.js';
 const router = express.Router();
 
 router.get('/collection', auth, getUserCharactersController);
+router.get('/free', auth, getFreeCharsController);
 router.get('/:charId', auth, gerCharByIdController);
 router.get('/', auth, getAllCarsController);
 

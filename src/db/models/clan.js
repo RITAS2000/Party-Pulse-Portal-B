@@ -12,6 +12,7 @@ const ClanSchema = new Schema(
     members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     clanChars: [{ type: Schema.Types.ObjectId, ref: 'Characterer' }],
     clanColor: { type: String, default: 'red' },
+    message: { type: String, default: '' },
   },
   {
     timestamps: true,
