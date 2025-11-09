@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import { CharactersCollection } from '../db/models/character.js';
+// import mongoose from 'mongoose';
+// import { CharactersCollection } from '../db/models/character.js';
 import { ClansCollection } from '../db/models/clan.js';
 
 export function createClan(payload) {
@@ -10,28 +10,27 @@ export async function getAllClans() {
   const clans = await ClansCollection.find().lean();
   return clans;
 }
-export async function deleteClan(clanId, userId) {
-  const clan = await ClansCollection.findOneAndDelete({
-    _id: clanId,
-    leaderId: userId,
-  });
+// export async function deleteClan(clanId, userId) {
+//   const clan = await ClansCollection.findOneAndDelete({
+//     _id: clanId,
+//     leaderId: userId,
+//   });
 
-  if (!clan) return null;
+//   if (!clan) return null;
 
-  // 2️⃣ Якщо клан видалено — оновлюємо персонажів
-  await CharactersCollection.updateMany(
-    { 'clan.clanId': new mongoose.Types.ObjectId(clanId) },
-    {
-      $unset: { 'clan.clanId': '' },
-      $set: {
-        'clan.accepted': false,
-        'clan.role': 'member',
-      },
-    },
-  );
+//   await CharactersCollection.updateMany(
+//     { 'clan.clanId': new mongoose.Types.ObjectId(clanId) },
+//     {
+//       $unset: { 'clan.clanId': '' },
+//       $set: {
+//         'clan.accepted': false,
+//         'clan.role': 'member',
+//       },
+//     },
+//   );
 
-  return clan;
-}
+//   return clan;
+// }
 
 export function getClanById(clanId) {
   return ClansCollection.findById(clanId);

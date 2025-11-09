@@ -2,8 +2,10 @@ import express from 'express';
 import { auth } from '../middlewares/auth.js';
 import { upload } from '../middlewares/upload.js';
 import {
+  acceptCharToClanController,
   addCharToClanController,
   addClansController,
+  notAcceptCharToClanController,
 } from '../controllers/clan.js';
 import { getClansController } from '../controllers/clan.js';
 import { deleteClanController } from '../controllers/clan.js';
@@ -18,6 +20,8 @@ import {
 const router = express.Router();
 router.get('/', auth, getClansController);
 router.patch('/add-message', auth, upsertMessageController);
+router.patch('/accept-char', auth, acceptCharToClanController);
+router.delete('/not-accept-char', auth, notAcceptCharToClanController);
 router.patch('/add-char', auth, addCharToClanController);
 router.get('/:clanId', getClanByIdController);
 router.get('/:clanId/message', getClanMessageController);

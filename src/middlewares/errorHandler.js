@@ -1,8 +1,6 @@
 import { isHttpError } from 'http-errors';
 
 export function errorHandler(error, req, res, next) {
-  console.error('Error from errorHandler:', error);
-  console.error(error.stack);
   if (isHttpError(error) === true) {
     return res
       .status(error.statusCode)

@@ -3,7 +3,6 @@ import { ClansCollection } from '../db/models/clan.js';
 import { UsersCollection } from '../db/models/user.js';
 import {
   createClan,
-  deleteClan,
   getAllClans,
   getClanMessage,
   setClanMessage,
@@ -12,80 +11,77 @@ import { uploadToCloudinary } from '../utils/uploadCloudinary.js';
 import * as fs from 'node:fs/promises';
 
 export async function addClansController(req, res) {
-  try {
-    req.body.leaderId = req.user.id;
-    const result = req.file ? await uploadToCloudinary(req.file.path) : null;
-    if (req.file) await fs.unlink(req.file.path);
+  req.body.leaderId = req.user.id;
+  const result = req.file ? await uploadToCloudinary(req.file.path) : null;
+  if (req.file) await fs.unlink(req.file.path);
 
-    const { clanName, server, clanColor, charId, leaderCharNick, leaderId } =
-      req.body;
+  const { clanName, server, clanColor, charId, leaderCharNick, leaderId } =
+    req.body;
 
-    if (!clanName || !server) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const existingClan = await ClansCollection.findOne({
-      charId,
-      server,
-    });
-    if (existingClan) {
-      return res.status(400).json({
-        message: 'Character cannot be a leader of two clans on the same server',
-      });
-    }
-
-    const character = await CharactersCollection.findById(charId);
-    if (!character) {
-      return res.status(404).json({ message: 'Character not found' });
-    }
-
-    if (character.server !== server) {
-      return res.status(400).json({
-        message: 'Character cannot create a clan on another server',
-      });
-    }
-
-    const clanNameExists = await ClansCollection.findOne({
-      clanName: { $regex: new RegExp(`^${clanName}$`, 'i') },
-      server,
-    });
-    if (clanNameExists) {
-      return res.status(400).json({
-        message: 'A clan with this name already exists on this server',
-      });
-    }
-
-    const clan = await createClan({
-      clanName,
-      server,
-      clanColor,
-      charId,
-      leaderCharNick,
-      logo: result.secure_url,
-      leaderId,
-      createdBy: leaderId,
-      members: [leaderId],
-      clanChars: [charId],
-    });
-
-    await UsersCollection.findByIdAndUpdate(leaderId, { clansId: clan._id });
-    await CharactersCollection.findByIdAndUpdate(charId, {
-      clan: {
-        clanId: clan._id,
-        role: 'leader',
-        accepted: true,
-      },
-    });
-
-    res.status(201).json({
-      status: 201,
-      message: 'Successfully created a clan!',
-      clanData: clan,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+  if (!clanName || !server) {
+    return res.status(400).json({ message: 'Missing required fields' });
   }
+
+  const existingClan = await ClansCollection.findOne({
+    charId,
+    server,
+  });
+  if (existingClan) {
+    return res.status(400).json({
+      message: 'Character cannot be a leader of two clans on the same server',
+    });
+  }
+
+  const character = await CharactersCollection.findById(charId);
+  if (!character) {
+    return res.status(404).json({ message: 'Character not found' });
+  }
+
+  if (character.server !== server) {
+    return res.status(400).json({
+      message: 'Character cannot create a clan on another server',
+    });
+  }
+
+  const clanNameExists = await ClansCollection.findOne({
+    clanName: { $regex: new RegExp(`^${clanName}$`, 'i') },
+    server,
+  });
+  if (clanNameExists) {
+    return res.status(400).json({
+      message: 'A clan with this name already exists on this server',
+    });
+  }
+
+  const clan = await createClan({
+    clanName,
+    server,
+    clanColor,
+    charId,
+    leaderCharNick,
+    logo: result.secure_url,
+    leaderId,
+    createdBy: leaderId,
+    members: [leaderId],
+    clanChars: [charId],
+  });
+
+  await UsersCollection.findByIdAndUpdate(leaderId, { clansId: clan._id });
+  await CharactersCollection.findByIdAndUpdate(charId, {
+    clan: {
+      clanId: clan._id,
+      role: 'leader',
+      accepted: true,
+    },
+  });
+
+  res.status(201).json({
+    status: 201,
+    message: 'Successfully created a clan!',
+    clanData: clan,
+  });
+
+  res.status(500).json({ message: 'Server error' });
 }
 
 export async function getClansController(req, res) {
@@ -97,16 +93,38 @@ export async function deleteClanController(req, res) {
   const { clanId } = req.params;
   const userId = req.user.id;
 
-  const clan = await deleteClan(clanId, userId);
+  try {
+    const clan = await ClansCollection.findById(clanId);
 
-  if (!clan) {
+    if (!clan) {
+      return res.status(404).json({ message: 'Clan not found' });
+    }
+
+    // ❌ Перевірка: клан можна видалити лише якщо там 1 персонаж (сам лідер)
+    if (clan.clanChars && clan.clanChars.length > 1) {
+      return res
+        .status(400)
+        .json({ message: 'Cannot delete clan with multiple characters' });
+    }
+
+    // ✅ Видаляємо клан, тільки якщо користувач — лідер
+    if (clan.leaderId.toString() !== userId.toString()) {
+      return res
+        .status(403)
+        .json({ message: 'Only the clan leader can delete this clan' });
+    }
+
+    await ClansCollection.findByIdAndDelete(clanId);
+
+    return res.status(200).json({ message: 'Clan deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting clan:', error);
     return res
-      .status(403)
-      .json({ message: 'Only leader can delete this clan' });
+      .status(500)
+      .json({ message: 'Server error while deleting clan' });
   }
-
-  res.status(204).end();
 }
+
 export async function getClanByIdController(req, res) {
   const { clanId } = req.params;
 
@@ -119,26 +137,34 @@ export async function getClanByIdController(req, res) {
 }
 
 export async function addCharToClanController(req, res) {
-  const userId = req.user.id;
-  // const { clanId } = req.params;
   const { charId, clanId } = req.body;
 
   const clan = await ClansCollection.findById(clanId);
   if (!clan) return res.status(404).json({ message: 'Clan not found' });
 
-  await ClansCollection.findByIdAndUpdate(clanId, {
-    $push: { clanChars: charId },
-  });
+  if (clan.clanChars.includes(charId)) {
+    return res.status(400).json({ message: 'Character already queued' });
+  }
 
-  await UsersCollection.findByIdAndUpdate(userId, {
-    $push: { clansId: clanId },
-  });
+  const char = await CharactersCollection.findById(charId);
+  if (!char) return res.status(404).json({ message: 'Character not found' });
 
-  await CharactersCollection.findByIdAndUpdate(charId, {
-    'clan.clanId': clanId,
-  });
+  if (char.clan?.clanId) {
+    return res
+      .status(400)
+      .json({ message: 'Character already belongs to a clan.' });
+  }
 
-  res
+  // Додаємо clanId в персонажа
+  char.clan.clanId = clanId;
+  await char.save();
+
+  // // Додаємо персонажа в клановий масив очікування
+  // await ClansCollection.findByIdAndUpdate(clanId, {
+  //   $addToSet: { clanChars: charId },
+  // });
+
+  return res
     .status(200)
     .json({ message: 'Character added to clan. Waiting for acceptance.' });
 }
@@ -157,13 +183,77 @@ export async function getClanMessageController(req, res) {
 
   if (!clanId) return res.status(400).json({ message: 'clanId is required' });
 
-  try {
-    const message = await getClanMessage(clanId);
-    if (message === null)
-      return res.status(404).json({ message: 'Message not found' });
-    res.status(200).json({ message });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+  const message = await getClanMessage(clanId);
+  if (message === null)
+    return res.status(404).json({ message: 'Message not found' });
+  res.status(200).json({ message });
+}
+
+export async function acceptCharToClanController(req, res) {
+  const userId = req.user.id;
+  const { clanId, charId } = req.body;
+
+  if (!clanId || !charId) {
+    return res.status(400).json({ error: 'Missing charId or clanId' });
   }
+  const clan = await ClansCollection.findById(clanId);
+  if (!clan) {
+    return res.status(404).json({ error: 'Clan not found' });
+  }
+
+  if (clan.leaderId.toString() !== userId.toString()) {
+    return res
+      .status(403)
+      .json({ error: 'Only clan leader can accept characters' });
+  }
+  await ClansCollection.findByIdAndUpdate(clanId, {
+    $addToSet: { clanChars: charId },
+  });
+
+  const char = await CharactersCollection.findById(charId);
+  char.clan.accepted = true;
+
+  await char.save();
+
+  const user = await UsersCollection.findById(userId);
+  if (!user) return;
+
+  user.clansId = user.clansId || [];
+  if (!user.clansId.includes(clanId)) {
+    user.clansId.push(clanId);
+    await user.save();
+  }
+  return res.status(200).json({ message: 'Character is accepted' });
+}
+
+export async function notAcceptCharToClanController(req, res) {
+  const userId = req.user.id;
+  const { charId, clanId } = req.body;
+
+  if (!charId) {
+    return res.status(400).json({ error: 'Missing charId' });
+  }
+
+  const char = await CharactersCollection.findById(charId);
+  if (!char) {
+    return res.status(404).json({ error: 'Character not found' });
+  }
+  const clan = await ClansCollection.findById(clanId);
+  if (clan.charId.toString() === charId.toString()) {
+    return res.status(400).json({ error: 'Cannot remove leader character' });
+  }
+  if (
+    char.userId.toString() !== userId.toString() &&
+    clan.leaderId.toString() !== userId.toString()
+  ) {
+    return res.status(403).json({ error: 'No permission' });
+  }
+
+  char.clan = { clanId: null, role: 'member', accepted: false };
+  await char.save();
+  await ClansCollection.findByIdAndUpdate(clanId, {
+    $pull: { clanChars: char._id },
+  });
+
+  return res.status(200).json({ message: 'Character request canceled' });
 }
