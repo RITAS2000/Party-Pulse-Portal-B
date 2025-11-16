@@ -44,7 +44,7 @@ const characterSchema = new Schema(
       },
       role: {
         type: String,
-        enum: ['leader', 'member'],
+        enum: ['leader', 'officer', 'member'],
         default: 'member',
       },
       accepted: {

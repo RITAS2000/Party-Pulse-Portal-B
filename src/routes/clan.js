@@ -5,7 +5,10 @@ import {
   acceptCharToClanController,
   addCharToClanController,
   addClansController,
+  addOfficerController,
   notAcceptCharToClanController,
+  removeOfficerController,
+  transferLeadershipController,
 } from '../controllers/clan.js';
 import { getClansController } from '../controllers/clan.js';
 import { deleteClanController } from '../controllers/clan.js';
@@ -23,6 +26,9 @@ router.patch('/add-message', auth, upsertMessageController);
 router.patch('/accept-char', auth, acceptCharToClanController);
 router.delete('/not-accept-char', auth, notAcceptCharToClanController);
 router.patch('/add-char', auth, addCharToClanController);
+router.patch('/add-officer', auth, addOfficerController);
+router.patch('/remove-officer', auth, removeOfficerController);
+router.patch('/transferLeadership', auth, transferLeadershipController);
 router.get('/:clanId', getClanByIdController);
 router.get('/:clanId/message', getClanMessageController);
 router.post(

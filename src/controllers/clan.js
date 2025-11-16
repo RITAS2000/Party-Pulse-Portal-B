@@ -2,10 +2,14 @@ import { CharactersCollection } from '../db/models/character.js';
 import { ClansCollection } from '../db/models/clan.js';
 import { UsersCollection } from '../db/models/user.js';
 import {
+  addOfficer,
   createClan,
+  deleteClan,
   getAllClans,
   getClanMessage,
+  removeOfficer,
   setClanMessage,
+  transferLeadership,
 } from '../services/clan.js';
 import { uploadToCloudinary } from '../utils/uploadCloudinary.js';
 import * as fs from 'node:fs/promises';
@@ -36,7 +40,12 @@ export async function addClansController(req, res) {
   if (!character) {
     return res.status(404).json({ message: 'Character not found' });
   }
-
+  if (character.clan && character.clan.clanId) {
+    return res.status(400).json({
+      message:
+        'Character is already a member of a clan and cannot create a new one',
+    });
+  }
   if (character.server !== server) {
     return res.status(400).json({
       message: 'Character cannot create a clan on another server',
@@ -66,7 +75,10 @@ export async function addClansController(req, res) {
     clanChars: [charId],
   });
 
-  await UsersCollection.findByIdAndUpdate(leaderId, { clansId: clan._id });
+  await UsersCollection.findByIdAndUpdate(leaderId, {
+    $addToSet: { clansId: clan._id },
+  });
+
   await CharactersCollection.findByIdAndUpdate(charId, {
     clan: {
       clanId: clan._id,
@@ -100,21 +112,24 @@ export async function deleteClanController(req, res) {
       return res.status(404).json({ message: 'Clan not found' });
     }
 
-    // ❌ Перевірка: клан можна видалити лише якщо там 1 персонаж (сам лідер)
     if (clan.clanChars && clan.clanChars.length > 1) {
       return res
         .status(400)
         .json({ message: 'Cannot delete clan with multiple characters' });
     }
 
-    // ✅ Видаляємо клан, тільки якщо користувач — лідер
+    // ❌ Якщо користувач не лідер
     if (clan.leaderId.toString() !== userId.toString()) {
       return res
         .status(403)
         .json({ message: 'Only the clan leader can delete this clan' });
     }
 
-    await ClansCollection.findByIdAndDelete(clanId);
+    const deletedClan = await deleteClan(clanId, userId);
+
+    if (!deletedClan) {
+      return res.status(403).json({ message: 'Failed to delete clan' });
+    }
 
     return res.status(200).json({ message: 'Clan deleted successfully' });
   } catch (error) {
@@ -256,4 +271,65 @@ export async function notAcceptCharToClanController(req, res) {
   });
 
   return res.status(200).json({ message: 'Character request canceled' });
+}
+
+export async function addOfficerController(req, res) {
+  try {
+    const userId = req.user.id;
+    const { charId, clanId } = req.body;
+
+    if (!charId || !clanId) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const result = await addOfficer({ userId, charId, clanId });
+
+    return res.status(result.status).json({
+      message: result.message,
+      updatedChar: result.updatedChar,
+    });
+  } catch (error) {
+    console.error('Error in addOfficerController:', error);
+    return res
+      .status(500)
+      .json({ message: 'Server error while assigning officer' });
+  }
+}
+
+export async function removeOfficerController(req, res) {
+  try {
+    const userId = req.user.id;
+    const { charId, clanId } = req.body;
+
+    const updatedChar = await removeOfficer({ userId, charId, clanId });
+
+    return res.status(200).json({
+      message: 'Officer removed successfully',
+      char: updatedChar,
+    });
+  } catch (error) {
+    console.error('Error in removeOfficerController:', error);
+
+    return res.status(error.status || 500).json({
+      message: error.message || 'Server error while removing officer',
+    });
+  }
+}
+
+export async function transferLeadershipController(req, res) {
+  try {
+    const userId = req.user.id;
+    const { clanId, newLeaderCharId } = req.body;
+
+    const result = await transferLeadership(clanId, newLeaderCharId, userId);
+
+    return res.status(200).json({
+      message: 'Leadership successfully transferred',
+      clan: result.clan,
+      newLeaderChar: result.newLeaderChar,
+      oldLeaderChar: result.oldLeaderChar,
+    });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
 }
